@@ -42,9 +42,25 @@ sub _inline_throw_exception {
                     # It's just a normal SV, e.g. "12345"
                     : $default;
                 $exception .= 'eval {'.sprintf('%s = %s;', $default_val_var,$default_val ).'};';
+                # I'm getting this error in case of accessor:
+                #   Modification of a read-only value attempted at test.pl line 10, <IN>
+                # so I'm checking for this error thrown in the above eval in the if
+                # condition below
                 $exception .= 'if( $@ =~ /read.?only/ ) {';
-                $exception .= 'die $exception';
+                # since, I failed to set the attribute's value to default,
+                # I'm dying with a suitable exception
+                # but I don't know why/how I'm getting the default value
+                # on the attribute in my test program
+                $exception .= 'die $exception;';
+                # here I took some hit and trial approach & threw a warning
+                # instead of die
+                # on throwing a warning, I don't get the default value
+                # which makes sense, because I failed to set the attribute to
+                # its default value
+                # $exception .= 'warn $message;';
                 $exception .= '} else {';
+                # if I didn't fail in setting the attribute's value to default
+                # I'll just throw a warning (this is for non-accessors calls)
                 $exception .= 'warn $message;' unless $action eq 'default_no_warning';
                 $exception .= '}';
                 return $exception;
